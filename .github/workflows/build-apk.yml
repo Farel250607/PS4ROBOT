@@ -2,15 +2,17 @@
 name: Build PS4 Robot APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: ["main"]
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
+    name: Build Debug APK
     runs-on: ubuntu-latest
 
     steps:
@@ -21,46 +23,23 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 12266719
-          accept-android-sdk-licenses: true
-          log-accepted-android-sdk-licenses: true
-          packages: platform-tools
-
-      - name: Check project files
-        run: |
-          echo "=== Root directory ==="
-          ls -la
-          echo "=== App directory ==="
-          ls -la app
-
       - name: Build debug APK
+        working-directory: .
         run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug --stacktrace
-          elif [ -f "./app/gradlew" ]; then
-            chmod +x ./app/gradlew
-            cd app
-            ./gradlew assembleDebug --stacktrace
-          else
-            echo "ERROR: File gradlew tidak ditemukan."
-            echo "Periksa struktur proyek dan pastikan Gradle Wrapper tersedia."
-            exit 1
-          fi
+          gradle --version
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: PS4Robot-debug-apk
-          path: |
-            app/build/outputs/apk/debug/*.apk
-            build/outputs/apk/debug/*.apk
+          name: PS4Robot-APK
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
